@@ -11,14 +11,11 @@
         "Other"
     ],
     "activationEvents": [
-        "onCommand:extension.currentSymbol"
+        "*"
     ],
     "main": "./out/src/extension",
     "contributes": {
-        "commands": [{
-            "command": "extension.currentSymbol",
-            "title": "Show Current Symbol"
-        }]
+        "commands": []
     },
     "scripts": {
         "vscode:prepublish": "tsc -p ./",

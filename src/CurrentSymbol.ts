@@ -57,8 +57,8 @@ export class CurrentSymbol {
             var position = editor.selection.active;
             this._symbols.forEach(symbol => {
                 if(symbol.kind != 'Class'){
-                    if(symbol.location.range.start.line<position.line &&
-                    symbol.location.range.end.line>position.line){
+                    if(symbol.location.range.start.line<=position.line &&
+                    symbol.location.range.end.line>=position.line){
                         this._statusBarItem.text = symbol.name;
                         return false;
                     }
