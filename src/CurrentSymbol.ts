@@ -6,36 +6,27 @@ export class CurrentSymbol {
     private _symbols;
 
     constructor() {
-        this.updateSymbols;
+        this.updateSymbols();
     }
 
     public setSymbols(symbols){
-        if (!symbols[0] || !symbols[0][0]) return 'No symbols found';
-        else symbols = symbols[0];
         this._symbols = symbols;
     }
 
     public updateSymbols(){
+        var maxRetries = 10;
         var self = this;
-        let symbols = new Promise ((resolve, reject) => {
-             if (vscode && vscode.window && vscode.window.activeTextEditor &&
+
+        if (vscode && vscode.window && vscode.window.activeTextEditor &&
                     vscode.window.activeTextEditor.document &&
                     vscode.window.activeTextEditor.document.uri) {
                         var active = vscode.window.activeTextEditor.document.uri;
-                        vscode.commands
-                            .executeCommand('vscode.executeDocumentSymbolProvider', active)
-                            .then(function() {
-                                resolve(arguments);
-                            });
-            } else {
-                reject('No symbols found');
-            }    
-        });
-        symbols.then(function (resolve) {
-             self.setSymbols(resolve);
-        }, function onRejected() {
-             console.log('No symbols found');
-        });
+                        this._tryAtMost('',maxRetries,
+                            vscode.commands.executeCommand('vscode.executeDocumentSymbolProvider', active)
+                        );
+        } else {
+            console.log('No symbols found');
+        }
     }
 
     public updateCurrentSymbol() {
@@ -57,8 +48,8 @@ export class CurrentSymbol {
             var position = editor.selection.active;
             this._symbols.forEach(symbol => {
                 if(symbol.kind != 'Class'){
-                    if(symbol.location.range.start.line<position.line &&
-                    symbol.location.range.end.line>position.line){
+                    if(symbol.location.range.start.line<=position.line &&
+                    symbol.location.range.end.line>=position.line){
                         this._statusBarItem.text = symbol.name;
                         return false;
                     }
@@ -70,5 +61,26 @@ export class CurrentSymbol {
     
     dispose() {
         this._statusBarItem.dispose();
+    }
+
+    private _tryAtMost(otherArgs, maxRetries, promise) {
+        var self = this;
+        promise.then(function (resolve) {
+            if (typeof resolve !== 'undefined' && resolve.length > 0){
+                self.setSymbols(resolve);
+            }else{
+                if (maxRetries > 0) {
+                    setTimeout(function() {
+                        self._tryAtMost(otherArgs, maxRetries - 1, promise);
+                    }, 500);
+                }
+            }
+        }, function onRejected() {
+            if (maxRetries > 0) {
+                setTimeout(function() {
+                    self._tryAtMost(otherArgs, maxRetries - 1, promise);
+                }, 500);
+            }
+        });
     }
 }
