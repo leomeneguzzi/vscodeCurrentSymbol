@@ -43,18 +43,23 @@ export class CurrentSymbol {
         }
         let doc = editor.document;
 
-        if(this._symbols){
-            var position = editor.selection.active;
-            this._symbols.forEach(symbol => {
-                if(symbol.kind != 'Class'){
-                    if(symbol.location.range.start.line<=position.line &&
-                    symbol.location.range.end.line>=position.line){
-                        this._statusBarItem.text = symbol.name;
-                        return false;
-                    }
+        //if(this._symbols){
+        var position = editor.selection.active;
+        var found = false;
+        this._symbols.forEach(symbol => {
+            if(symbol.kind != 'Class'){
+                if(symbol.location.range.start.line<=position.line &&
+                symbol.location.range.end.line>=position.line){
+                    this._statusBarItem.text = symbol.name;
+                    found = true;
+                    return true;
                 }
-            });
+            }
+        });
+        if(!found){
+            this._statusBarItem.text = "No symbols found.";            
         }
+        //};
         this._statusBarItem.show();
     }
     
@@ -67,9 +72,8 @@ export class CurrentSymbol {
         var active = vscode.window.activeTextEditor.document.uri;
         vscode.commands.executeCommand(command,active).then(function (resolve) {
             var array = arguments[0];
-            if (typeof array !== 'undefined' && array.length > 0){
-                self.setSymbols(array);
-            }else{
+            self.setSymbols(array);
+            if (!(typeof array !== 'undefined' && array.length > 0)){
                 if (maxRetries > 0) {
                     setTimeout(function() {
                         self._tryAtMost(otherArgs, maxRetries - 1, command);
