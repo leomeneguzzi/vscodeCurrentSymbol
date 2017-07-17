@@ -11,19 +11,18 @@ export class CurrentSymbol {
 
     public setSymbols(symbols){
         this._symbols = symbols;
+        this.updateCurrentSymbol();
     }
 
     public updateSymbols(){
-        var maxRetries = 10;
+        var maxRetries = 50;
         var self = this;
-
         if (vscode && vscode.window && vscode.window.activeTextEditor &&
-                    vscode.window.activeTextEditor.document &&
-                    vscode.window.activeTextEditor.document.uri) {
-                        var active = vscode.window.activeTextEditor.document.uri;
-                        this._tryAtMost('',maxRetries,
-                            vscode.commands.executeCommand('vscode.executeDocumentSymbolProvider', active)
-                        );
+            vscode.window.activeTextEditor.document && vscode.window.activeTextEditor.document.uri) {
+                var active = vscode.window.activeTextEditor.document.uri;
+                this._tryAtMost('',maxRetries,
+                    'vscode.executeDocumentSymbolProvider'
+                );
         } else {
             console.log('No symbols found');
         }
@@ -63,23 +62,25 @@ export class CurrentSymbol {
         this._statusBarItem.dispose();
     }
 
-    private _tryAtMost(otherArgs, maxRetries, promise) {
+    private _tryAtMost(otherArgs, maxRetries, command) {
         var self = this;
-        promise.then(function (resolve) {
-            if (typeof resolve !== 'undefined' && resolve.length > 0){
-                self.setSymbols(resolve);
+        var active = vscode.window.activeTextEditor.document.uri;
+        vscode.commands.executeCommand(command,active).then(function (resolve) {
+            var array = arguments[0];
+            if (typeof array !== 'undefined' && array.length > 0){
+                self.setSymbols(array);
             }else{
                 if (maxRetries > 0) {
                     setTimeout(function() {
-                        self._tryAtMost(otherArgs, maxRetries - 1, promise);
-                    }, 500);
+                        self._tryAtMost(otherArgs, maxRetries - 1, command);
+                    }, 3000);
                 }
             }
         }, function onRejected() {
             if (maxRetries > 0) {
                 setTimeout(function() {
-                    self._tryAtMost(otherArgs, maxRetries - 1, promise);
-                }, 500);
+                    self._tryAtMost(otherArgs, maxRetries - 1, command);
+                }, 3000);
             }
         });
     }

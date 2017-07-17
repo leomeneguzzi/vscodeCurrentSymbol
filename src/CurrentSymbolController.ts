@@ -13,10 +13,7 @@ export class CurrentSymbolController {
         let subscriptions: vscode.Disposable[] = [];
         vscode.window.onDidChangeTextEditorSelection(this._onEventChangeTextEditor, this, subscriptions);
         vscode.window.onDidChangeActiveTextEditor(this._onEventChangeActiveEditor, this, subscriptions);
-
-        // update the counter for the current file
-        this._currentSymbol.updateCurrentSymbol();
-
+        
         // create a combined disposable from both event subscriptions
         this._disposable = vscode.Disposable.from(...subscriptions);
     }
